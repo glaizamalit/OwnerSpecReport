@@ -1,0 +1,375 @@
+﻿@model OwnerSpecReport.Models.ManualAccrualClass
+@{
+    ViewBag.Title = "Home";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+<div id="overlay">
+    <div id="loading"></div>
+</div>
+<div id="content" class="container-fluid">
+    <p></p>
+    <section id="accrual" class="card">
+        <div class="card-header">Manual Accrual</div>
+        <div id="dvManualAccrual" class="card-body">
+            <button id="btnAdd" class="btn-outline-primary">Add New</button>
+            <div id="grid"></div>
+        </div>
+        <label id="lblvesselCode" hidden="hidden"></label>
+        <label id="lblcalendarMonth" hidden="hidden"></label>
+        <label id="lblvoucherNumber" hidden="hidden"></label>
+        <label id="lblpONumber" hidden="hidden"></label>
+    </section>
+</div>
+<style>
+    #grid .k-grid-content {
+        min-height: 100px;
+    }
+
+    #grid .k-grid-filter.k-state-active {
+        background-color: rgb(66,139,202);
+    }
+
+    .navbar-nav li:hover .dropdown-menu {
+        display: block;
+    }
+
+    .k-grid-edit {
+        display: none;
+    }
+</style>
+<script>
+     var userID = "@HttpContextAccessor.HttpContext.Session.GetString("tkusername").ToString().ToUpper()"
+    $(document).ready(function () {
+        $(window).scroll(function () {
+            if ($(this).scrollTop() > 40) {
+                $('#navbar_top').addClass("fixed-top");
+                // add padding top to show content behind navbar
+                $('body').css('padding-top', $('.navbar').outerHeight() + 'px');
+            } else {
+                $('#navbar_top').removeClass("fixed-top");
+                // remove padding top from body
+                $('body').css('padding-top', '0');
+            }
+        });
+
+            dataSource = new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: "ManualAccrual/GetList",
+                        type: "GET",
+                        dataType: "json",
+                        contentType: "application/json; charset=utf-8"
+                    },
+                    create: {
+                        url: "ManualAccrual/Add",
+                        dataType: "json",
+                        type: "POST",
+                    },
+                    destroy: {
+                        url: "ManualAccrual/Delete",
+                        dataType: "json",
+                        type: "POST"
+                    },
+                    //parameterMap: function (data, operation) {
+                    //    if (operation !== "read" && data.models) {
+                    //        return {
+                    //            accrual: data.models[0]
+                    //        };
+                    //    }
+                    //}
+                 },
+            //serverFiltering: true,
+            serverSorting: true,
+            /*serverPaging: true,*/
+            batch: false,
+            pageSize: 10,
+            error: function (e) {
+
+                //var msg = e.xhr.responseText; // responseText is the custom error message which is being sent from the server side code
+
+                // Show the message to user
+                //alert(msg);
+                alert("Status: " + e.status + "; Error message: " + e.errorThrown);
+            },
+            requestEnd: function (e) {
+                //check the "response" argument to skip the local operations
+                if (e.type === "create" && e.response) {
+                    e.sender.read(); // refresh data source to get record ID
+                    // console.log("Record Created");
+                } else {
+                    // console.log("Not create event")
+                }
+            },
+            schema: {
+                model: {
+                    id: "id",
+                    fields: {
+                        id: { editable: false, type: "number", nullable: true },
+                        vessel_Code: {
+                            type: "string"
+                        },
+                        vessel_Name: {
+                            type: "string",
+                            validation: {
+                                required: true,
+                                vessel_Namevalidation: function (input) {
+                                    if (input.is("[name='vessel_Name']")) {
+                                        return checkDuplicate(input, "vessel_Name");
+                                    }
+                                    return true;
+                                }
+                            }
+                        },
+                        calendar_Month: {
+                            type: "date",
+                            validation: {
+                                required: true,
+                                calendar_Monthvalidation: function (input) {
+                                    if (input.is("[name='calendar_Month']")) {
+                                        return checkDuplicate(input, "calendar_Month");
+                                    }
+                                    return true;
+                                }
+                            }
+                        },
+                        voucher_Number: {
+                            type: "string",
+                            validation: {
+                                required: true,
+                                voucher_Numbervalidation: function (input) {
+                                    if (input.is("[name='voucher_Number']")) {
+                                        return checkDuplicate(input, "voucher_Number");
+                                    }
+                                    return true;
+                                }
+                            }
+                        },
+                        pO_Number: {
+                            type: "string",
+                            validation: {
+                                pO_Numbervalidation: function (input) {
+                                    if (input.is("[name='pO_Number']")) {
+                                        return checkDuplicate(input, "pO_Number");
+                                    }
+                                    return true;
+                                }
+                            }
+                        },
+                        createdDt: { type: "date", editable: false, },
+                        createdBy: { type: "string", defaultValue: userID, editable: false, },
+                        updatedBy: { type: "string", defaultValue: '', editable: false, },
+                        updatedDt: { type: "date", defaultValue: null, editable: false, }
+                    }
+                }
+            },
+            //filter: {
+            //    filters: [{ field: 'Business', operator: 'eq' }]
+            //}
+        });
+
+        var dsSort = [];
+        dsSort.push(
+            { field: "calendar_Month", dir: "desc" }
+        );
+        dataSource.sort(dsSort);
+
+        function checkDuplicate(input, fieldName) {
+            var vesselCode = $(input).closest("tr").find("input[name='vessel_Name']").val();
+            var calendarMonth = $(input).closest("tr").find("input[name='calendar_Month']").val();
+            var voucherNumber = $(input).closest("tr").find("input[name='voucher_Number']").val();
+            var pONumber = $(input).closest("tr").find("input[name='pO_Number']").val();
+
+            $(".k-dropdown").removeClass("k-invalid");
+            $(".k-dropdown-wrap").removeClass("k-invalid");
+            $("#vessel_Name").removeClass("k-invalid");
+            $(".k-picker-wrap").removeClass("k-invalid");
+            $("#voucher_Number").removeClass("k-invalid");
+            $("#vessel_Name-error").remove();
+            $("#calendar_Month-error").remove();
+            $("#voucher_Number-error").remove();
+            $("#pO_Number-error").remove();
+
+            var isValid = "true";
+
+            if (input.is("[name='" + fieldName + "']")) {
+                $.ajax({
+                    url: "/ManualAccrual/CheckDuplication",
+                    async: false,
+                    type: "POST",
+                    dataType: "json",
+                    data: {
+                        vesselCode: vesselCode,
+                        calendarMonth: calendarMonth,
+                        voucherNumber: voucherNumber,
+                        pONumber: pONumber
+                    },
+                    success: function (result) {
+                        if (result == false) {
+                            isValid = result;
+                            return false;
+                        }
+                    },
+                    error: function () {
+                        return false;
+                    }
+                });
+
+                console.log(isValid);
+
+                if (isValid == false) {
+                    input.attr("data-" + fieldName + "validation-msg", "Entered values have a duplicate record.");
+                    $(".k-dropdown-wrap").addClass("k-invalid");
+                    $(".k-picker-wrap").addClass("k-invalid");
+                    $("#voucher_Number").addClass("k-invalid");
+                    $("#pO_Number").addClass("k-invalid");
+                    return false;
+                }
+                else {
+                    $(".k-dropdown").removeClass("k-invalid");
+                    $(".k-dropdown-wrap").removeClass("k-invalid");
+                    $("#vessel_Name").removeClass("k-invalid");
+                    $(".k-picker-wrap").removeClass("k-invalid");
+                    $("#voucher_Number").removeClass("k-invalid");
+                    $("#vessel_Name-error").remove();
+                    $("#calendar_Month-error").remove();
+                    $("#voucher_Number-error").remove();
+                    $("#pO_Number-error").remove();
+                    console.log(fieldName);
+                    return true;
+                }
+            }
+
+        }
+
+        function initDropDownLists() {
+            var vesselCode = $("#vessel_Name").kendoDropDownList({
+                //  autoBind: false,
+                dataTextField: "text",
+                dataValueField: "value",
+                dataSource: {
+                    /*type: "odata",*/
+                    //serverFiltering: true,
+                    type: "json",
+                    transport: {
+                        read: "ManualAccrual/GetVesselList"
+                    }
+                }
+            }).data("kendoDropDownList");
+
+            $("#calendar_Month").kendoDatePicker({
+                depth: "year",
+                start: "year",
+                format: "yyyy.MM.01",
+                parseFormat: "yyyy.MM.01",
+                close: function () {
+                    var picker = $("#calendar_Month").data("kendoDatePicker");
+                    var currentDate = picker.value();
+                    currentDate.setDate(1);
+                    picker.value(currentDate);
+                }
+
+            });
+        }
+
+        $("#grid").kendoGrid({
+            dataSource: dataSource,
+            columnMenu: {
+                filterable: true
+            },
+            scrollable: true,
+            editable: false,
+            sortable: true,
+            navigatable: true,
+            resizable: true,
+            reorderable: true,
+            groupable: true,
+            filterable: true,
+            pageable: {
+                pageSizes: [50, 100, 150, "all"],
+                //numeric: false,
+                position: "top",
+            },
+            columnMenu: true,
+            toolbar: ["search"],
+            search: {
+                fields: ["vessel_Name", "calendar_Month", "voucher_Number", "pO_Number", "createdDt", "createdBy", "updatedBy", "updatedDt"]
+            },
+            filterable: true,
+            columns: [
+                { field: "vessel_Name", title: "Vessel Name", filterable: { multi: true, search: true }, width: 230, locked: true},
+                { field: "calendar_Month", title: "Calendar Month", format: "{0:yyyy-MMM}", filterable: { multi: true, search: true }, width: 210, locked: true},
+                { field: "voucher_Number", title: "Voucher Number", filterable: { multi: true, search: true }, width: 190, locked: true},
+                { field: "pO_Number", title: "PO Number", filterable: { multi: true, search: true }, width: 200, locked: true},
+                { field: "createdBy", title: "Created By", filterable: { multi: true, search: true }, width: 150, },
+                { field: "createdDt", title: "Created Date", format: "{0:dd-MMM-yyyy}", filterable: { multi: true, search: true }, width: 180 },
+                { field: "updatedBy", title: "Updated By", filterable: { multi: true, search: true }, width: 150, },
+                { field: "updatedDt", title: "Updated Date", format: "{0:dd-MMM-yyyy}", filterable: { multi: true, search: true }, width: 180 },
+                {
+                    command: [{ name: "edit", visible: false }, "destroy"], width: 120, locked: true
+                }
+            ],
+            editable: "inline",
+            autoBind: true,
+            beforeEdit: function (e) {
+                var data = e.model;
+                //$('#lblVesselCode').text(data.Vessel_Code);
+                //$('#lblCalendarMonth').text(data.Calendar_Month);
+                //$('#lblVoucherNumber').text(data.Voucher_Number);
+                //$('#lblPONumber').text(data.PO_Number);
+            },
+            edit: function (e) {
+                initDropDownLists();
+                if (e.model.isNew() == false) {
+                    this.dataSource.getByUid(e.model.uid).set("updatedBy", userID);
+                }
+
+                e.container.find("input[name=voucher_Number]").attr("maxlength", 20);
+                e.container.find("input[name=pO_Number]").attr("maxlength", 20);
+            },
+            save: function (e) {
+                var calendarMonth = e.container.find("[name=calendar_Month]").data().kendoDatePicker.value();
+                var vesselCode = e.container.find("[name=vessel_Name]").data().kendoDropDownList.value();
+                var calendarMonthString = kendo.toString(new Date(calendarMonth), 'yyyy/MM/01');
+                var voucherNumber = e.container.find("[name=voucher_Number]").val();
+                var poNumber = e.container.find("[name=pO_Number]").val();
+
+                //e.model.set("calendar_Month", calendarMonthString);
+                e.model.set("calendar_MonthString", calendarMonthString);
+                e.model.set("vessel_Code", vesselCode);
+                e.model.set("voucher_Number", voucherNumber);
+                e.model.set("pO_Number", poNumber);
+            }
+        });
+
+
+        $("#btnAdd").click(function () {
+            var grid = $("#grid").data("kendoGrid");
+            grid.addRow();
+        })
+
+
+    });
+
+    $("#grid").kendoTooltip({
+        show: function (e) {
+            if (this.content.text().length == 0) {
+                this.content.parent().css("visibility", "hidden");
+            }
+            else {
+                this.content.parent().css("visibility", "visible");
+            }
+        },
+        filter: "th",
+        content: function (e) {
+            var target = e.target;
+            return target.text();
+        },
+        width: 150
+    }).data("kendoTooltip");
+
+
+</script>

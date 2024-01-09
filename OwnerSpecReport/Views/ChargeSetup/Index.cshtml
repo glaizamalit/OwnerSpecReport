@@ -1,0 +1,245 @@
+﻿@{
+    ViewBag.Title = "Home";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+<div id="overlay">
+    <div id="loading"></div>
+</div>
+<div id="content" class="container-fluid">
+    <p></p>
+    <section id="accrual" class="card">
+        <div class="card-header">RealMarine Charge Setup</div>
+        <div id="dvManualAccrual" class="card-body">
+            <button id="btnAdd" class="btn-outline-primary">Add New</button>
+            <div id="grid"></div>
+        </div>        
+    </section>
+</div>
+<style>
+    #grid .k-grid-content {
+        min-height: 100px;
+    }
+
+    #grid .k-grid-filter.k-state-active {
+        background-color: rgb(66,139,202);
+    }
+
+    .navbar-nav li:hover .dropdown-menu {
+        display: block;
+    }    
+</style>
+<script>
+    var userID = "@HttpContextAccessor.HttpContext.Session.GetString("tkusername").ToString().ToUpper()"
+    $(document).ready(function () {
+        $(window).scroll(function () {
+            if ($(this).scrollTop() > 40) {
+                $('#navbar_top').addClass("fixed-top");
+                // add padding top to show content behind navbar
+                $('body').css('padding-top', $('.navbar').outerHeight() + 'px');
+            } else {
+                $('#navbar_top').removeClass("fixed-top");
+                // remove padding top from body
+                $('body').css('padding-top', '0');
+            }
+        });
+
+            dataSource = new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: "/api/ChargeSetupSvc",
+                        type: "GET",
+                        dataType: "json"                        
+                    },
+                    create: {
+                        url: "/api/ChargeSetupSvc/postCharge",
+                        dataType: "json",
+                        type: "POST",
+                        contentType: "application/json"
+                    },
+                    update: {
+                        url: "/api/ChargeSetupSvc/updateCharge",
+                        dataType: "json",
+                        type: "PUT",                        
+                        contentType: "application/json"
+                    },
+                    destroy: {
+                        url: "/api/ChargeSetupSvc/deleteCharge",
+                        dataType: "json",
+                        type: "DELETE",
+                        contentType: "application/json"
+                    },
+                   parameterMap: function (options, operation) {
+                            if (operation != "read") {
+                                // console.log(kendo.stringify(options));
+                                return kendo.stringify(options);
+                            }
+                        }
+                 },
+            batch: false,
+            pageSize: 10,
+            error: function (e) {
+
+                //var msg = e.xhr.responseText; // responseText is the custom error message which is being sent from the server side code
+
+                // Show the message to user
+                //alert(msg);
+                alert("Status: " + e.status + "; Error message: " + e.errorThrown);
+            },
+            requestEnd: function (e) {
+                //check the "response" argument to skip the local operations
+                if (e.type === "create" && e.response) {
+                    e.sender.read(); // refresh data source to get record ID
+                    // console.log("Record Created");
+                } else {
+                    // console.log("Not create event")
+                }
+            },
+            schema: {
+                model: {
+                    id: "id",
+                    fields: {
+                        id: { type: "number"},
+                        vessel_Name: {type: "string", editable: false},
+                        vessel_Code: { type: "string", validation: {
+                                        required: true,
+                                        vessel_Codevalidation: function (input) {
+                                            if (input.is("[name='vessel_Code']")) {
+                                                return checkDuplicate(input, "vessel_Code");
+                                            }
+                                            return true;
+                                        }                                    
+                                }
+                        },
+                        charge_Account_Code: { type: "string", validation: { required: true } },
+                        amount: { type: "number", validation: { required: true } },
+                        created_Date: { type: "date", editable: false, },
+                        created_By: { type: "string", defaultValue: userID, editable: false},
+                        updated_By: { type: "string", defaultValue: userID, editable: true},
+                        updated_Date: { type: "date", editable: false, }
+                    }
+                }
+            },
+            //filter: {
+            //    filters: [{ field: 'Business', operator: 'eq' }]
+            //}
+        });                  
+
+        $("#grid").kendoGrid({
+            dataSource: dataSource,
+            pageable: {
+                position: "top",
+            },
+            excel:{
+              allPages:true
+            },
+            toolbar: ["excel","search"],
+            search: {
+                fields: ["vessel_Name","vessel_Code", "charge_Account_Code", "amount", "created_Date", "created_By", "updated_By", "updated_Date"]
+            },
+            sortable: true,
+            filterable: true,
+            columns: [
+                { field: "vessel_Name", title: "Vessel Name", filterable: { multi: true, search: true }, width: "200px"},
+                { field: "vessel_Code", title: "Vessel Code", filterable: { multi: true, search: true }, editor: vesselDropDownEditor, width: "200px"},
+                { field: "charge_Account_Code", title: "Account Code", filterable: { multi: true, search: true }, width: "200px"},
+                { field: "amount", title: "Amount", filterable: { multi: true, search: true }, width: "150px"},
+                { command: ["edit","destroy"], title: "&nbsp;", width: "200px" },
+                { field: "created_By", title: "Created By", filterable: { multi: true, search: true }, width: "150px", },
+                { field: "created_Date", title: "Created Date", format: "{0:dd-MMM-yyyy}", filterable: { multi: true, search: true }, width: "180px" },
+                { field: "updated_By", title: "Updated By", filterable: { multi: true, search: true }, width: "150px", },
+                { field: "updated_Date", title: "Updated Date", format: "{0:dd-MMM-yyyy}", filterable: { multi: true, search: true }, width: "180px" }                
+            ],
+            editable: "inline",
+            edit: function (e) {
+                if (e.model.isNew() == false) {
+                    this.dataSource.getByUid(e.model.uid).set("updated_By", userID);                 
+                }
+                $(e.container).find('input[name="updated_By"]').attr("readonly", true);
+                e.container.find("input[name=charge_Account_Code]").attr("maxlength", 10);                
+            }            
+        });
+
+        $("#btnAdd").click(function () {
+            var grid = $("#grid").data("kendoGrid");
+            grid.addRow();
+        })
+
+        function vesselDropDownEditor(container, options) {
+            if(options.model.isNew() == true){
+                $('<input name="vessel_Code" data-text-field="vessel_Code" data-value-field="vessel_Code" data-bind="value:' + options.field + '" required="required"/>')
+                .appendTo(container)
+                .kendoDropDownList({
+                    autoBind: false,
+                    dataTextField: "vessel_Code",
+                    dataValueField: "vessel_Code",
+                    dataSource: {
+                        transport: {
+                            read: "/api/ChargeSetupSvc/getVesselList",
+                            dataType: "json"
+                        }
+                    }
+                });
+            }else{                
+                var input = kendo.toString(options.model[options.field]);
+                $(container).text(input);
+                $(container).toggleClass("k-edit-cell");          
+            }
+        }
+
+        function checkDuplicate(input, fieldName) {
+            var vesselCode = $(input).closest("tr").find("input[name='vessel_Code']").val();
+            
+            // console.log("vesselCode=" + vesselCode)
+
+            $(".k-dropdown").removeClass("k-invalid");
+            $(".k-dropdown-wrap").removeClass("k-invalid");
+            $(".k-picker-wrap").removeClass("k-invalid");
+            $("#vessel_Code-error").remove();
+            
+            var isValid = "true";
+
+            if (input.is("[name='" + fieldName + "']")) {
+                $.ajax({
+                    url: "/api/ChargeSetupSvc/CheckDuplication?vesselCode=" + vesselCode,
+                    async: false,
+                    type: "GET",
+                    dataType: "json",                    
+                    success: function (result) {
+                        if (result == false) {
+                            isValid = result;
+                            return false;
+                        }
+                    },
+                    error: function () {
+                        return false;
+                    }
+                });
+
+                // console.log(isValid);
+
+                if (isValid == false) {
+                    input.attr("data-" + fieldName + "validation-msg", "Vessel Code already existed");
+                    $(".k-dropdown-wrap").addClass("k-invalid");
+                    $(".k-picker-wrap").addClass("k-invalid");
+                    return false;
+                }
+                else {
+                    $(".k-dropdown").removeClass("k-invalid");
+                    $(".k-dropdown-wrap").removeClass("k-invalid");
+                    $("#vessel_Code").removeClass("k-invalid");
+                    $(".k-picker-wrap").removeClass("k-invalid");
+                    $("#vessel_Code-error").remove();
+                    return true;
+                }
+            }
+
+        }
+
+    });  
+
+
+</script>

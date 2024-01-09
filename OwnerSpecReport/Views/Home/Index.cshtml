@@ -1,0 +1,256 @@
+﻿@model OwnerSpecReport.Models.FormModel
+@{
+    ViewBag.Title = "Home";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div id="overlay">
+    <div id="loading"></div>
+</div>
+<div id="content" class="container-fluid">
+    <p></p>
+    <section id="Upload" class="card">
+        <div class="card-header">Generate owner reports based on template files</div>
+        <div class="card-body">
+            <form id="frmUpload" class="form-horizontal" method="post" action="/">
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="control-label required">Year</label>
+                    </div>
+                    @Html.EditorFor(model => model.Year, new { htmlAttributes = new { @class = "form-control", @style = "width: 200px;max-width: 200px; height:100%;" } })
+                    @Html.ValidationMessageFor(model => model.Year)
+                </div>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="control-label required">Month</label>
+                    </div>
+                    <select asp-for="Month" asp-items="Model.MonthList"></select>
+                </div>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="control-label required">Report Type</label>
+                    </div>
+                    <select asp-for="ReportType" asp-items="Model.ReportTypeList"></select>
+                </div>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="control-label required">Reports</label>
+                    </div>
+                    <select style="width: 500px! important;" id="ReportList" multiple="multiple" name="ReportList"></select>
+                    <div class="input-group-append">
+                        &nbsp;&nbsp;
+                        <input class="btn btn-outline-primary" type="button" id="ReportsSelectAll" value="Select All" />
+                    </div>
+                    @Html.ValidationMessageFor(model => model.ReportList)
+                </div>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="control-label required">Vessel Group</label>
+                    </div>
+                    <select asp-for="VesselGroup" asp-items="Model.VesselGroupList"></select>
+                </div>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="control-label required">Vessels</label>
+                    </div>
+                    <select style="width: 500px! important;" id="VesselList" multiple="multiple" name="VesselList"></select>
+                    <div class="input-group-append">
+                        &nbsp;&nbsp;
+                        <input class="btn btn-outline-primary" type="button" id="VesselsSelectAll" value="Select All" />
+                    </div>
+                    @Html.ValidationMessageFor(model => model.VesselList)
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-12">
+                        <button type="submit" class="btn btn-outline-primary">Generate Report</button>&nbsp;&nbsp;<input type="button" id="btnReset" class="btn btn-outline-warning" value="Reset" />
+                    </div>
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+<script>
+
+    $(document).ready(function () {
+        $("#Month").kendoDropDownList();
+        $("#ReportType").kendoDropDownList({
+            change: ReportTypeChange
+        });
+        $("#VesselGroup").kendoDropDownList({
+            change: VesselGroupChange
+        });
+
+        var reportType = $("#ReportType").data("kendoDropDownList")
+        var vesselGroup = $("#VesselGroup").data("kendoDropDownList")
+
+        $("#ReportList").kendoMultiSelect({
+            filter: "startswith",
+            dataTextField: 'text',
+            dataValueField: 'value',
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/api/OTRSvc/getReportList?ReportType=" + reportType.value(),
+                        dataType: 'json'
+                    }
+                }
+            },
+            value: [
+                @if (Model.ReportList != null) {
+                foreach (var c in Model.ReportList)
+                {
+                    @Html.Raw(String.Format("'{0}',", c))
+                }
+            }
+            ]
+        });
+
+        $("#VesselList").kendoMultiSelect({
+            filter: "startswith",
+            dataTextField: 'text',
+            dataValueField: 'value',
+            dataSource: {
+                transport: {
+                    read: {
+                        url: "/api/OTRSvc/getVesselList?VesselGroup=" + vesselGroup.value(),
+                        dataType: 'json'
+                    }
+                }
+            },
+            value: [
+                @if (Model.VesselList != null) {
+                foreach (var c in Model.VesselList)
+                {
+                    @Html.Raw(String.Format("'{0}',", c))
+                }
+                }
+           ]
+        });
+
+        function ReportTypeChange(e) {
+            var multiselect = $("#ReportList").data("kendoMultiSelect");
+            multiselect.value([]);
+            multiselect.dataSource.options.transport.read.url = "/api/OTRSvc/getReportList?ReportType=" + e.sender.value();
+            multiselect.dataSource.read();
+        }
+
+        function VesselGroupChange(e) {
+
+            var multiselect = $("#VesselList").data("kendoMultiSelect");
+            multiselect.value([]);
+            multiselect.dataSource.options.transport.read.url = "/api/OTRSvc/getVesselList?VesselGroup=" + e.sender.value();
+            multiselect.dataSource.read();
+
+        }
+
+        $("#ReportsSelectAll").click(function () {
+            var MultiSelectObj = $("#ReportList").getKendoMultiSelect();
+            var arrItem = new Array();
+            $.each(MultiSelectObj.dataSource.data(), function (i, item) {
+                arrItem.push(item.value);
+            });
+            MultiSelectObj.value(arrItem);
+        });
+
+        $("#VesselsSelectAll").click(function () {
+            console.log("select all vessels")
+            var MultiSelectObj = $("#VesselList").getKendoMultiSelect();
+            var arrItem = new Array();
+            $.each(MultiSelectObj.dataSource.data(), function (i, item) {
+                arrItem.push(item.value);
+                console.log("vessel=" + item.value);
+            });
+            MultiSelectObj.value(arrItem);
+        });
+
+        $("#btnReset").click(function () {
+            var reportList = $("#ReportList").data("kendoMultiSelect");
+            reportList.value([]);
+            var vesselList = $("#VesselList").data("kendoMultiSelect");
+            vesselList.value([]);
+        });
+
+        var isValidModel = '@ViewBag.IsValidModel'
+
+        if (isValidModel == "true") {
+            $("#overlay").show();
+
+            var y = $("#Year").val();
+            var m = $("#Month").val();
+
+            var reportList = reportList = $("#ReportList").data("kendoMultiSelect");
+            var vesselList = $("#VesselList").data("kendoMultiSelect");
+            var arrReport = [];
+            var reportItems = reportList.value();
+            for (var i = 0; i < reportItems.length; i++) {
+                arrReport.push(reportItems[i]);
+            }
+            var arrVessel = [];
+            var vesselItems = vesselList.value();
+            for (var i = 0; i < vesselItems.length; i++) {
+                arrVessel.push(vesselItems[i]);
+            }
+            var reportType = $("#ReportType").data("kendoDropDownList").value();
+
+            var jsonData = {
+                "Year": y,
+                "Month": m,
+                "ReportType": reportType,
+                "VesselGroup": "",
+                "ReportList": arrReport,
+                "VesselList": arrVessel
+            }
+
+            /*
+            var jsonData = {
+                "Initial":"APFK",
+                "FullName": "Alex Kwan",
+                "Surname": "1",
+                "GivenName": "2",
+                "Title": "3",
+                "Email": "4",
+                "Company": "5",
+                "Department":"6"
+            }
+            var targetURL = "/home/AJAXTest";
+            */
+            // alert(JSON.stringify(jsonData));
+
+            var targetURL = "/home/generateAJAX";
+            $.ajax({
+                url: targetURL,
+                type: 'POST',
+                data: JSON.stringify(jsonData),
+                contentType: 'application/json; charset=utf-8',
+                success: function (data, status, xhr) {
+                    $("#overlay").hide();
+
+                    // window.open(data.fileUrl);
+                    window.location.href = data.fileUrl;
+
+                    var downloadLink = document.createElement("a");
+                    if (downloadLink.download !== undefined) { // feature detection
+                        // Browsers that support HTML5 download attribute
+                        downloadLink.download = fileNameToSaveAs;
+                        downloadLink.innerHTML = "Download File";
+                        downloadLink.href = textToSaveAsURL;
+                        downloadLink.style.display = "none";
+                        document.body.appendChild(downloadLink);
+                        downloadLink.click();
+                    } else {
+                        alert('Your browser does not support file download. Please use Chrome or Firefox instead');
+                    }
+                },
+                error: function (xhr, ajaxOptions, thrownError) {
+                    // alert("Download failed");
+                    alert(xhr.status);
+                    alert(thrownError);
+                }
+            })
+
+
+        }
+    });
+
+
+</script>
+

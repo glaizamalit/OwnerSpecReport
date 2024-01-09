@@ -1,0 +1,410 @@
+﻿
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+}
+
+
+/* #region Footer styles */
+.footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    font-size: 0.85em;
+    height: 60px;
+}
+/* #endregion */
+
+/* #region custom Kendo UI styles */
+h1 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: lighter;
+    color: #fff;
+}
+.input-group-text {
+background-color:#bacbde!important;
+color:black!important;
+}
+h2 {
+    font-size: 30px;
+    font-weight: lighter;
+}
+
+.placeholders {
+    margin: 30px auto;
+}
+
+.placeholder img {
+    display: inline-block;
+}
+
+p .k-button {
+    margin: 0 15px 0 0;
+}
+
+#configure {
+    display: none;
+}
+
+p .k-button {
+    margin: 0 15px 0 0;
+}
+
+#responsive-panel {
+    padding: 0;
+}
+
+    #responsive-panel .k-menu {
+        padding: .5rem;
+    }
+/* #endregion */
+@media (max-width: 767px) {
+    #responsive-panel {
+        transition: all linear .2s;
+    }
+
+    #configure {
+        display: block;
+        float: right;
+    }
+
+    .k-rpanel {
+        padding: 0 1rem;
+    }
+
+    .k-rpanel-expanded {
+        padding: .5rem 1rem;
+    }
+
+    .navbar-header {
+        width: 100%;
+    }
+
+    .k-menu .k-item,
+    .k-menu .k-link {
+        width: 100%;
+    }
+
+    .k-menu .k-link {
+        box-sizing: border-box;
+    }
+}
+
+#header {
+            background: #ffffff;
+            padding: 0;
+        }
+
+}
+
+/* styles for validation helpers */
+
+.field-validation-error {
+    color: #b94a48;
+}
+
+.field-validation-valid {
+    display: none;
+}
+
+input.input-validation-error {
+    border: 1px solid #b94a48;
+}
+
+textarea.input-validation-error {
+    border: 1px solid #b94a48;
+}
+
+input[type="checkbox"].input-validation-error {
+    border: 0 none;
+}
+
+span.field-validation-error{
+     color:red;
+}
+
+.validation-summary-errors {
+    color: #b94a48;
+}
+
+.validation-summary-valid {
+    display: none;
+}
+
+label{
+    font-weight: bold;
+}
+
+.aParent div {
+    float: left;
+    clear: none; 
+}
+
+.k-icon-32 {
+        font-size: 32px; /* Sets icon size to 32px */
+    }
+
+    .k-icon-48 {
+        font-size: 48px; /* Sets icon size to 48px */
+    }
+
+    .k-icon-64 {
+        font-size: 64px; /* Sets icon size to 64px */
+    }
+/* Ripple effect */
+.ripple {
+  background-position: center;
+  transition: background 0.8s;
+  border: none;
+  border-radius: 0px;
+  padding: 8px 18px;
+  font-size: 16px;
+  cursor: pointer;
+  color: #282828;
+  background-color: #e4e7eb;
+  box-shadow: 0 0 4px #999;
+  outline: none;
+}
+.ripple:hover {
+  background: #BEBEBE radial-gradient(circle, transparent 1%, #e4e7eb 1%) center/15000%;
+}
+.ripple:active {
+  background-color: #BEBEBE;
+  background-size: 100%;
+  transition: background 0s;
+}
+.divBox
+{
+	background-color: rgb(251, 251, 251);
+    outline-color: black;
+    border: 1px solid lightgray;
+    border-radius: 3px;
+    padding: 10px;
+    width: 500px;
+}
+.bookmarkRibbon {
+    width: 733px;
+    height: 0;
+    border-bottom: 30px solid #f2dd9b;
+    border-top: 30px solid #f2dd9b;
+    border-right: 32px solid transparent;
+    float: left;
+    
+    font-size: 18px;
+    font-weight: 700;
+    position: absolute;
+    left: -36px;
+    top: -1px;
+    padding-left: 73px;
+    /* box-shadow: -3px 1px #a2811b, -3px -1px #a2811b; */
+    color: #a2811b;
+}
+.oft{
+text-align: center;
+}
+/* Container for flexboxes */
+.rowRes {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom:9px;
+}
+.tooltip {
+  position: relative;
+  display: inline-block;
+  opacity: 1!important;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 30%;
+  background-color: rgba(0,0,0,0.5);
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 10px 0;
+  
+  /* Position the tooltip */
+  position: absolute;
+  z-index: 1;
+  top: 2px;
+  left: 101%;
+  opacity: 1!important;
+  padding: 5px;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+}
+/* Create four equal columns */
+.columnRes {
+  flex: 25%;
+  padding-left: 20px;
+}
+.inputRes
+{
+	width:75%;
+}
+  .inputResBtn
+  {
+  	  width:65%;
+  }
+
+
+/* On screens that are 992px wide or less, go from four columns to two columns */
+
+
+/* On screens that are 600px wide or less, make the columns stack on top of each other instead of next to each other */
+
+
+@media screen and (max-width: 1700px) {
+
+  .columnRes {
+    flex: 50%;
+	padding:0px;
+	margin-bottom:-8px;
+  }
+
+  .inputRes{
+  	  width:65%!important;
+  }
+}
+@media screen and (max-width: 1650px) {
+
+   .inputResBtn
+  {
+  	  width:53%!important;
+  }
+  
+}
+
+@media screen and (max-width: 1202px) {
+
+  .inputResBtn
+  {
+  	  width:49%!important;
+  }
+}
+@media screen and (max-width: 1210px) {
+
+  .columnRes {
+    flex: 50%;
+	padding:0px;
+	margin-bottom:-8px;
+  }
+
+  .inputRes{
+  	  width:65%!important;
+  }
+  .inputResBtn
+  {
+  	  width:45%!important;
+  }
+}
+
+@media screen and (max-width: 1165px) {
+  .inputRes{
+  	  width:62%!important;
+  }
+
+}
+
+@media screen and (max-width: 1050px) {
+  .inputRes{
+  	  width:57%!important;
+  }
+    .inputResBtn
+  {
+  	  width:37%!important;
+  }
+
+}
+
+@media screen and (max-width: 930px) {
+  .inputRes{
+  	  width:53%!important;
+  }
+    .inputResBtn
+  {
+  	  width:33%!important;
+  }
+
+}
+
+@media screen and (max-width: 872px) {
+  #BUSelectAll{
+  	 display:none;
+  }
+   .inputResBtn
+  {
+  	  width:52%!important;
+  }
+
+}
+
+
+
+@media screen and (max-width: 860px) {
+  .rowRes {
+    flex-direction: column;
+
+  }
+  #BUSelectAll{
+  	 display:none;
+  }
+   .inputResBtn
+  {
+  	  width:52%!important;
+  }
+   .resp {
+	margin-bottom:-29px;
+  }
+     .resp1 {
+	margin-bottom:-44px;
+  }
+
+}
+
+.required::after 
+{
+    content: " *";
+    font-weight: bold;
+    color: red; 
+}
+
+.input-group-prepend {
+  width : 10%; /*adjust as needed*/
+}
+
+.input-group-prepend label {
+  width: 100%;
+  overflow: hidden;
+}
+
+#overlay {
+			position: fixed; /* Sit on top of the page content */
+			display: none; /* Hidden by default */
+			width: 100%; /* Full width (cover the whole page) */
+			height: 100%; /* Full height (cover the whole page) */
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background-color: rgba(100,100,100,0.8); /* Black background with opacity */
+			z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+			/* cursor: pointer; Add a pointer on hover */
+}
+
+#loading {
+		    width: 128px;
+			height: 128px;
+			position: absolute;
+			top: 50%; 
+			left: 50%;
+			transform: translate(-50%,-50%);
+			background: url( '/images/loading-128-white-narrow.gif' ) no-repeat center;
+		}
